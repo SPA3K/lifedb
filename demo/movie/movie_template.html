@@ -1,0 +1,170 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'PlayfairDisplay';src:url('../../visual/_fonts/PlayfairDisplay.ttf');font-display:swap}
+@font-face{font-family:'MiSans-Regular';src:url('../../visual/_fonts/MiSans-Regular.ttf');font-display:swap}
+@font-face{font-family:'MiSans-Light';src:url('../../visual/_fonts/MiSans-Light.ttf');font-display:swap}
+@font-face{font-family:'MiSans-Medium';src:url('../../visual/_fonts/MiSans-Medium.ttf');font-display:swap}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#05070d;display:flex;justify-content:center;align-items:center;min-height:100vh}
+#stage{position:relative;width:1600px;height:900px;overflow:hidden;background:#05070d;
+  font-family:'MiSans-Regular','PingFang SC','Microsoft YaHei',sans-serif;color:#fff}
+section{position:absolute;inset:0;opacity:0}
+.kb{position:absolute;inset:0;transform-origin:50% 50%}
+.kb img{position:absolute;filter:brightness(.42) saturate(.55) contrast(1.15)}
+.kb canvas{position:absolute;left:0;top:0}
+.dim{position:absolute;inset:0;background:
+  radial-gradient(ellipse at 50% 48%,rgba(5,7,13,0) 30%,rgba(5,7,13,.72) 100%)}
+.photo{position:absolute;width:296px;border:7px solid #f4f6fa;border-radius:5px;
+  box-shadow:0 18px 60px rgba(0,0,0,.75);opacity:0;transform:scale(.5)}
+#intro .t1{position:absolute;left:0;right:0;top:352px;text-align:center;
+  font-family:'MiSans-Medium';font-size:30px;letter-spacing:26px;color:#8fb8ff;opacity:0}
+#intro .t2{position:absolute;left:0;right:0;top:398px;text-align:center;
+  font-family:'PlayfairDisplay';font-size:150px;letter-spacing:6px;
+  background:linear-gradient(180deg,#fff 35%,#7fa8e8 100%);
+  -webkit-background-clip:text;color:transparent;opacity:0}
+#intro .t3{position:absolute;left:0;right:0;top:588px;text-align:center;
+  font-family:'MiSans-Light';font-size:34px;letter-spacing:10px;color:#c9d8f2;opacity:0}
+.chtxt{position:absolute;left:86px;bottom:96px}
+.chtxt .yr{font-family:'PlayfairDisplay';font-size:170px;line-height:1;
+  background:linear-gradient(180deg,#fff 30%,#7fa8e8 100%);
+  -webkit-background-clip:text;color:transparent}
+.chtxt .meta{margin-top:16px;font-family:'MiSans-Light';font-size:38px;
+  letter-spacing:8px;color:#c9d8f2}
+.chtxt .meta b{font-family:'MiSans-Medium';font-weight:400;color:#8fd0ff}
+#outro .line{position:absolute;left:0;right:0;text-align:center;
+  font-family:'MiSans-Light';font-size:46px;letter-spacing:12px;color:#dbe7fb;opacity:0}
+#outro .line b{font-family:'PlayfairDisplay';font-size:74px;letter-spacing:2px;
+  color:#fff;margin-right:14px;font-weight:400}
+#outro .brand{position:absolute;left:0;right:0;bottom:84px;text-align:center;
+  font-family:'MiSans-Medium';font-size:26px;letter-spacing:16px;color:rgba(143,184,255,.7);opacity:0}
+#outro .kb img{filter:brightness(.3) saturate(.5) contrast(1.1)}
+</style></head><body>
+<div id="stage"></div>
+<script>
+const D = /*__DATA__*/null;
+const W=1600,H=900, INTRO=3.2, CH=3.0, FADE=.35, OUTRO=4.5;
+const DUR = INTRO + D.chapters.length*CH + OUTRO;
+const stage=document.getElementById('stage');
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ease=p=>1-Math.pow(1-p,3);
+const pop=p=>{p=clamp(p,0,1);return p<1?1-Math.pow(2,-10*p)*Math.cos(p*9):1}; // easeOutBack近似
+function merc(la,lo,z){const s=256*Math.pow(2,z);const x=(lo+180)/360*s;
+  const r=la*Math.PI/180,y=(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*s;return[x,y];}
+function proj(pr,la,lo){const[x,y]=merc(la,lo,pr.mz);
+  return[pr.ox+(x-pr.mx0)*pr.k, pr.oy+(y-pr.my0)*pr.k];}
+
+function mkChapter(c,i){
+  const s=document.createElement('section');
+  s.innerHTML=`<div class="kb"><img src="_maps/${c.map}"><canvas width="${W}" height="${H}"></canvas></div>
+    <div class="dim"></div>
+    <div class="chtxt"><div class="yr">${c.year}</div>
+    <div class="meta"><b>${c.city}</b> · ${c.days} 天有轨迹</div></div>`;
+  s.querySelector('img').style.cssText=
+    `width:${c.proj.mw}px;height:${c.proj.mh}px;left:${c.proj.ox}px;top:${c.proj.oy}px;`+
+    'filter:brightness(.42) saturate(.55) contrast(1.15)';
+  stage.appendChild(s);
+  const cv=s.querySelector('canvas'),ctx=cv.getContext('2d');
+  const off=document.createElement('canvas');off.width=W;off.height=H;
+  const oc=off.getContext('2d');
+  oc.fillStyle='rgba(125,211,252,.20)';
+  for(const[,la,lo]of c.pts){const[x,y]=proj(c.proj,la,lo);
+    oc.beginPath();oc.arc(x,y,1.7,0,7);oc.fill();}
+  const phs=c.photos.map((p,k)=>{const im=document.createElement('img');
+    im.className='photo';
+    im.src=p.img.startsWith('data:')?p.img:'data:image/jpeg;base64,'+p.img;
+    im.style.left=(p.x-148)+'px';im.style.top=(p.y-190)+'px';
+    im.style.transform=`scale(.5) rotate(${k%2?3.5:-3}deg)`;
+    s.appendChild(im);return im;});
+  return{s,ctx,off,phs,c};
+}
+const chapObjs=D.chapters.map(mkChapter);
+
+// 片头
+const intro=document.createElement('section');
+intro.id='intro';
+intro.innerHTML=`<div class="kb"><img src="_maps/${D.world.map}"><canvas width="${W}" height="${H}"></canvas></div>
+  <div class="dim"></div>
+  <div class="t1">LIFEDB · LIFE MOVIE</div>
+  <div class="t2">${D.stats.years}</div>
+  <div class="t3">${D.stats.days} 天被 GPS 见证 · ${D.stats.cities} 座城市</div>`;
+intro.querySelector('img').style.cssText=
+  `width:${D.world.proj.mw}px;height:${D.world.proj.mh}px;left:${D.world.proj.ox}px;top:${D.world.proj.oy}px;`+
+  'filter:brightness(.42) saturate(.55) contrast(1.15)';
+stage.insertBefore(intro,stage.firstChild);
+const iCtx=intro.querySelector('canvas').getContext('2d');
+const iOff=document.createElement('canvas');iOff.width=W;iOff.height=H;
+const iOc=iOff.getContext('2d');
+iOc.fillStyle='rgba(125,211,252,.16)';
+for(const[,la,lo]of D.world.pts){const[x,y]=proj(D.world.proj,la,lo);
+  iOc.beginPath();iOc.arc(x,y,1.4,0,7);iOc.fill();}
+
+// 片尾
+const outro=document.createElement('section');
+outro.id='outro';
+const L=D.stats;
+outro.innerHTML=`<div class="kb"><img src="_maps/${D.world.map}"></div>
+  <div class="dim"></div>
+  <div class="line" style="top:200px"><b>${L.years}</b>${D.chapters.length}年</div>
+  <div class="line" style="top:320px"><b>${L.days}</b>天被 GPS 见证</div>
+  <div class="line" style="top:440px"><b>${L.cities}</b>座城市</div>
+  <div class="line" style="top:560px"><b>${L.photos}</b>张照片上图</div>
+  <div class="line" style="top:680px"><b>${L.workouts}</b>个训练日 · ${L.km.toLocaleString()} 公里</div>
+  <div class="brand">LIFEDB — YOUR LIFE, ONE FILE</div>`;
+stage.appendChild(outro);
+
+function fade(s,v){s.style.opacity=clamp(v,0,1);}
+function chapter(i,p){
+  const o=chapObjs[i],s=o.s;
+  fade(s,Math.min(p/FADE,(1-p)/FADE));
+  if(parseFloat(s.style.opacity||0)<0.005)return;
+  o.s.querySelector('.kb').style.transform=`scale(${1+.09*ease(p)})`;
+  o.ctx.clearRect(0,0,W,H);
+  o.ctx.drawImage(o.off,0,0);
+  const rp=ease(clamp((p-.05)/.60,0,1)),n=Math.floor(rp*o.c.pts.length);
+  o.ctx.globalCompositeOperation='lighter';
+  o.ctx.fillStyle='rgba(190,230,255,.95)';
+  for(let k=0;k<n;k++){const[,la,lo]=o.c.pts[k];const[x,y]=proj(o.c.proj,la,lo);
+    o.ctx.beginPath();o.ctx.arc(x,y,2.3,0,7);o.ctx.fill();}
+  o.ctx.globalCompositeOperation='source-over';
+  o.phs.forEach((im,k)=>{
+    const q=pop((p-(.28+k*.14))/.10);
+    im.style.opacity=clamp(q,0,1);
+    im.style.transform=`scale(${.5+.5*q}) rotate(${k%2?3.5:-3}deg)`;});
+  const t=o.s.querySelector('.chtxt');
+  const ta=clamp((p-.04)/.10,0,1)*clamp((1-p)/.06,0,1);
+  t.style.opacity=ta;t.style.transform=`translateY(${(1-ta)*30}px)`;
+}
+function render(){
+  const t=window.T||0;
+  // intro
+  {const p=clamp(t/INTRO,0,1);
+   fade(intro,Math.min(clamp(t/.4,0,1),clamp((INTRO-t)/.3,0,1)));
+   intro.querySelector('.kb').style.transform=`scale(${1.06-.06*ease(p)})`;
+   const rp=ease(clamp((t-.3)/2.2,0,1)),n=Math.floor(rp*D.world.pts.length);
+   iCtx.clearRect(0,0,W,H);iCtx.drawImage(iOff,0,0);
+   iCtx.globalCompositeOperation='lighter';
+   iCtx.fillStyle='rgba(190,230,255,.9)';
+   for(let k=0;k<n;k++){const[,la,lo]=D.world.pts[k];const[x,y]=proj(D.world.proj,la,lo);
+     iCtx.beginPath();iCtx.arc(x,y,2,0,7);iCtx.fill();}
+   iCtx.globalCompositeOperation='source-over';
+   const t1=intro.querySelector('.t1'),t2=intro.querySelector('.t2'),t3=intro.querySelector('.t3');
+   const a1=clamp((t-.8)/.5,0,1),a2=clamp((t-1.2)/.6,0,1),a3=clamp((t-1.9)/.6,0,1);
+   t1.style.opacity=a1;t2.style.opacity=a2;t3.style.opacity=a3;
+   t2.style.transform=`translateY(${(1-a2)*26}px)`;}
+  // chapters
+  D.chapters.forEach((c,i)=>{
+    const t0=INTRO+i*CH,p=(t-t0)/CH;
+    if(p<-.05||p>1.25){chapObjs[i].s.style.opacity=0;return;}
+    chapter(i,clamp(p,0,1));});
+  // outro
+  {const T0u=INTRO+D.chapters.length*CH,q=(t-T0u)/OUTRO;
+   if(q<-.05){outro.style.opacity=0;return;}
+   fade(outro,clamp(q/.3,0,1));
+   outro.querySelector('.kb').style.transform=`scale(${1.07-.07*ease(clamp(q,0,1))})`;
+   outro.querySelectorAll('.line').forEach((el,k)=>{
+     const a=clamp((q-.10-k*.13)/.09,0,1);
+     el.style.opacity=a;el.style.transform=`translateY(${(1-a)*24}px)`;});
+   const br=outro.querySelector('.brand');
+   br.style.opacity=clamp((q-.78)/.10,0,1);}
+}
+window.T=0;render();
+</script></body></html>

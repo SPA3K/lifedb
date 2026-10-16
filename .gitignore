@@ -15,6 +15,14 @@ visual/
 adapters/probe_*.py
 docs/_*.json
 
+# --- demo 生成物（内嵌个人轨迹, 永不入库） ---
+demo/movie/_maps/
+demo/movie/movie.html
+demo/movie/*.mp4
+demo/movie/*.gif
+demo/movie/_*.png
+demo/movie/_*.webm
+
 # --- 第三方参考仓库（本地克隆，不入库） ---
 references/
 

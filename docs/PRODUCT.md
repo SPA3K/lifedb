@@ -118,10 +118,12 @@
   - [x] Claude Desktop / Claude Code 接入示例写进 README
   - [ ] Windows/macOS/Linux 三平台接入实测
 - **Phase C · Demo 层**（1–2 周）
-  - [ ] `demo/atlas`：单文件 HTML 交互地图（PRD F1+F3，hero demo）
+  - [ ] `demo/movie`：人生电影 —— 一键 mp4（hero demo，非交互、README 自动播放、
+        竖版副产物发社媒；传播优先于交互，2026-10-16 用户拍板）
   - [ ] `demo/wrapped`：年度/周分享卡（把 `visual/` 流水线收编为 demo）
   - [ ] `demo/traincoach`：训练日视图（PRD F6）
   - [ ] 打包：pyproject + `pipx install life-db`
+  - [ ] （可选，非 hero）`demo/atlas`：交互式地图单文件 HTML（PRD F1 降级为可选项）
 - **Phase D · 社区开放**
   - [ ] CONTRIBUTING.md + adapter 模板 + good-first-issue 清单（§3.3 即种子）
   - [ ] CI（lint + adapter 幂等性测试 + golden-file）
