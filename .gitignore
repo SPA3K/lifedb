@@ -33,3 +33,8 @@ __pycache__/
 *.log
 store/
 /tmp/
+
+# --- 构建产物 ---
+*.egg-info/
+build/
+dist/
