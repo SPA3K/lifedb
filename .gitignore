@@ -1,0 +1,26 @@
+# --- 个人数据 / 凭据（永不入库） ---
+life.db
+life.db-wal
+life.db-shm
+data/
+sync/*.conf
+sync/*.log
+sync/*.session
+adapters/_xunji_cache/
+.env*
+*.env
+
+# --- 个人产出物（demo 流水线收编到 demo/ 后另行入库） ---
+visual/
+adapters/probe_*.py
+docs/_*.json
+
+# --- 第三方参考仓库（本地克隆，不入库） ---
+references/
+
+# --- 运行时 ---
+__pycache__/
+*.pyc
+*.log
+store/
+/tmp/

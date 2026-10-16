@@ -1,0 +1,17 @@
+{
+  "name": "photo-geolocate",
+  "implements": "media.photo.geolocate",
+  "modality": "photo",
+  "source": "icloud",
+  "entry": "geolocate.py",
+  "cmd": "py -3 adapters/geolocate.py [--dry-run]",
+  "mode": "periodic",
+  "period_days": 7,
+  "period_note": "照片增量入库后回填; 每周或新照片批次后跑一次",
+  "incremental": "只处理 lat IS NULL 的行, 回填过即跳过, 天然幂等",
+  "cache_dir": null,
+  "secrets_env": [],
+  "dry_run": true,
+  "status": "active",
+  "notes": "照片×轨迹跨模态融合: 时间戳在 geo_point 最近点回溯(6h窗口, T2实测), EXIF GPS 优先(入库时已提取), GPS来源写 meta.gps_source; PNG截图不回填"
+}

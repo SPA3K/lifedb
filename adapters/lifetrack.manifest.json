@@ -1,0 +1,16 @@
+{
+  "name": "lifetrack",
+  "implements": "location.trace",
+  "modality": "location",
+  "source": "lifetrack",
+  "entry": "lifetrack.py",
+  "cmd": "py -3 adapters/lifetrack.py <backUpData-all.csv> [--dry-run]",
+  "mode": "single",
+  "period_days": 0,
+  "incremental": "全量CSV重导; geo_point 主键(ts,lat,lon)自动去重, event 按 payload_hash=<ts>-<lat,lon> 幂等",
+  "cache_dir": null,
+  "secrets_env": [],
+  "dry_run": true,
+  "status": "active",
+  "notes": "已入库 294,811 点 + 833 停留段 (2015-07→今); 轨迹CSV更新后原样重跑即增量"
+}

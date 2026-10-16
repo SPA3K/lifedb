@@ -1,0 +1,16 @@
+{
+  "name": "xunji",
+  "implements": "health.workout",
+  "modality": "workout",
+  "source": "xunji",
+  "entry": "xunji.py",
+  "cmd": "py -3 adapters/xunji.py [start=2025-01-01] [end=今天] [--dry-run]",
+  "mode": "periodic",
+  "period_days": 1,
+  "incremental": "datestr缓存断点续跑(已缓存日期不请求); event 按 payload_hash=xj-<localid> 幂等",
+  "cache_dir": "_xunji_cache",
+  "secrets_env": [".env.xunji"],
+  "dry_run": true,
+  "status": "active",
+  "notes": "全量已入库 2025-01-01→2026-10-12 共125训练日; 日常增量只需跑到昨天"
+}

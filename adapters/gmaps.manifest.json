@@ -1,0 +1,16 @@
+{
+  "name": "gmaps",
+  "implements": "location.timeline",
+  "modality": "location,transport",
+  "source": "gmaps",
+  "entry": "gmaps.py",
+  "cmd": "py -3 adapters/gmaps.py <Timeline.json> [--dry-run]",
+  "mode": "single",
+  "period_days": 0,
+  "incremental": "文件级重复导出安全: event 按 payload_hash=gm-v/gm-a-<start>去重; timelinePath 点按 geo_point 主键(ts,lat,lon)去重, 与一生轨迹互补吞重叠",
+  "cache_dir": null,
+  "secrets_env": [],
+  "dry_run": true,
+  "status": "active",
+  "notes": "新版 Timeline 导出(visit/activity/timelinePath 三类); 首批 167 条 2026-09-24→10-12(含首尔行); Google 只留约3周, 定期导出追加可延长覆盖"
+}

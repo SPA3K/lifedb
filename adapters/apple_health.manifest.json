@@ -1,0 +1,17 @@
+{
+  "name": "apple_health",
+  "implements": "health.sleep,health.workout_route,health.ecg",
+  "modality": "sleep,workout_route,ecg",
+  "source": "apple_health",
+  "entry": "apple_health.py",
+  "cmd": "py -3 adapters/apple_health.py [export.zip] [--dry-run]",
+  "mode": "manual",
+  "period_days": 0,
+  "period_note": "每次 Apple 健康导出新包 (飞书收到导出.zip 后) 手动跑一次",
+  "incremental": "睡眠按 ah-sleep-<sha1(首段起|末段止|段数)> 幂等; gpx/ecg 按文件名 sha1 幂等; 文件已存在不重复拷贝 → 重复跑零副作用",
+  "cache_dir": null,
+  "secrets_env": [],
+  "dry_run": true,
+  "status": "active",
+  "notes": "睡眠会话切法=间隙聚类(>3h断开, 按日期分组会把凌晨续段链成24h长串); meta.stages_iso 带时区ISO(replay面板直读, 无需时区猜); 导出.xml ~1GB 流式解析 ~4min; 附带 25 条锻炼轨迹 GPX + 13 份心电 CSV 落 store/apple_health/; 已入库 37 睡眠会话(2024-10→2025-07) + 25 gpx + 13 ecg (2026-10-15)"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "photo",
+  "implements": "media.photo",
+  "modality": "photo",
+  "source": "icloud",
+  "entry": "photo.py",
+  "cmd": "py -3 adapters/photo.py <图库根目录> [--dry-run]",
+  "mode": "periodic",
+  "period_days": 0,
+  "period_note": "由 icloudpd --watch-with-interval 3600 拉取 + Hermes cron 每小时入库",
+  "incremental": "全量递归扫描(目录只增不改时便宜); 幂等键 sha1(relpath|size), UNIQUE(source,payload_hash)",
+  "cache_dir": null,
+  "secrets_env": [],
+  "dry_run": true,
+  "status": "active",
+  "notes": "下载落点 D:\\icloud-photos (--folder-structure {:%Y/%m/%d}); 时间戳 EXIF>mtime; GPS 从 EXIF 提取; Live Photo 视频半(_HEVC.mov)并入图片行不单独成行; 建议 icloudpd 加 --set-exif-datetime 保底"
+}
