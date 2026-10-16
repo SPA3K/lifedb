@@ -1,0 +1,3 @@
+[console_scripts]
+life-db = lifedb.cli:main
+lifedb-mcp = lifedb.mcp:main

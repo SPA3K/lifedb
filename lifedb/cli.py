@@ -1,0 +1,164 @@
+#!/usr/bin/env python
+"""life-db — 个人多模态时间线数据库 CLI
+
+用法:
+  life-db init                          初始化 DB
+  life-db ingest <file.jsonl>           导入事件 (每行一个 JSON dict)
+  life-db query <YYYY-MM>               某月时间线
+  life-db around <ISO时间> [--window 2h]  跨模态事件窗
+  life-db stats                         各模态计数与时间覆盖 + schema 版本
+  life-db adapters                      列出已注册 adapter 清单 (*.manifest.json)
+"""
+import argparse, hashlib, json, os, sqlite3, sys
+from datetime import datetime, timedelta, timezone
+
+DB_DIR = os.environ.get("LIFEDB_HOME") or os.path.expanduser("~/.hermes/life-db")
+DB_PATH = os.environ.get("LIFEDB_DB") or os.path.join(DB_DIR, "timeline.db")
+SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema.sql")
+
+def connect():
+    os.makedirs(DB_DIR, exist_ok=True)
+    con = sqlite3.connect(DB_PATH)
+    con.row_factory = sqlite3.Row
+    return con
+
+def cmd_init(args):
+    con = connect()
+    with open(SCHEMA_PATH) as f:
+        con.executescript(f.read())
+    con.commit()
+    print(f"OK 初始化完成: {DB_PATH}")
+
+def norm_hash(source, payload_ref, ts_start):
+    return hashlib.sha256(f"{source}|{payload_ref}|{ts_start}".encode()).hexdigest()[:16]
+
+def cmd_ingest(args):
+    con = connect()
+    with open(SCHEMA_PATH) as f:
+        con.executescript(f.read())
+    ins = 0; skip = 0
+    with open(args.file, encoding="utf-8") as fh:
+        for lineno, line in enumerate(fh, 1):
+            line = line.strip()
+            if not line: continue
+            try:
+                e = json.loads(line)
+            except json.JSONDecodeError:
+                print(f"  ! L{lineno} JSON解析失败, 跳过"); skip += 1; continue
+            for req in ("ts_start", "modality", "source"):
+                if not e.get(req):
+                    print(f"  ! L{lineno} 缺必填字段 {req}, 跳过"); skip += 1; break
+            else:
+                ph = e.get("payload_hash") or norm_hash(e["source"], e.get("payload_ref",""), e["ts_start"])
+                cur = con.execute(
+                    """INSERT OR IGNORE INTO event
+                       (ts_start,ts_end,modality,source,title,summary,payload_ref,payload_hash,lat,lon,tags,meta)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (e["ts_start"], e.get("ts_end"), e["modality"], e["source"],
+                     e.get("title"), e.get("summary"), e.get("payload_ref"), ph,
+                     e.get("lat"), e.get("lon"),
+                     json.dumps(e.get("tags", []), ensure_ascii=False),
+                     json.dumps(e.get("meta", {}), ensure_ascii=False)))
+                if cur.rowcount: ins += 1
+                else: skip += 1
+    con.commit()
+    print(f"OK 导入 {ins} 条, 去重/跳过 {skip} 条 -> {DB_PATH}")
+
+def fmt_row(r):
+    geo = f" ({r['lat']:.4f},{r['lon']:.4f})" if r["lat"] is not None else ""
+    dur = f" → {r['ts_end']}" if r["ts_end"] else ""
+    return f"{r['ts_start']}{dur} [{r['modality']}/{r['source']}]{geo} {r['title'] or ''}"
+
+def cmd_query(args):
+    con = connect()
+    # 范围 seek 而非 LIKE 前缀: LIKE '2026-09%' 在 SQLite 走不了 range optimization,
+    # 会退化成全索引扫描; ISO8601 字符串直接用 >= < 比较即可命中 idx_event_ts 的 seek
+    y, m = (int(x) for x in args.month.split("-"))
+    lo = f"{y:04d}-{m:02d}"
+    hi = f"{y + (m == 12):04d}-{1 if m == 12 else m + 1:02d}"
+    rows = con.execute(
+        "SELECT * FROM event WHERE ts_start >= ? AND ts_start < ? ORDER BY ts_start", (lo, hi)
+    ).fetchall()
+    if not rows: print("(无记录)"); return
+    for r in rows: print(fmt_row(r))
+    print(f"\n共 {len(rows)} 条")
+
+def cmd_around(args):
+    con = connect()
+    try:
+        center = datetime.fromisoformat(args.ts.replace("Z", "+00:00"))
+    except ValueError:
+        sys.exit(f"时间格式无效: {args.ts}")
+    w = args.window
+    unit = w[-1]; n = int(w[:-1])
+    delta = {"h": timedelta(hours=n), "m": timedelta(minutes=n), "d": timedelta(days=n)}.get(unit)
+    if not delta: sys.exit(f"窗口格式无效: {args.window} (如 2h/30m/1d)")
+    lo, hi = (center - delta).isoformat(), (center + delta).isoformat()
+    # 三分支 UNION 保语义(窗口内开始 / 窗口内结束 / 横跨整窗的长事件), 且三分支全走索引 seek:
+    # 原单条 OR 查询因 ts_end 无索引(现已有)与混合谓词, SQLite 无法做 MULTI-INDEX OR,
+    # 会退化为按 ts_start<? 的半表 seek → 扫全部历史; UNION 版每支都是 range seek, O(窗口命中数)
+    rows = con.execute(
+        """SELECT * FROM event WHERE id IN (
+             SELECT id FROM event WHERE ts_start >= ? AND ts_start <= ?
+             UNION SELECT id FROM event WHERE ts_end >= ? AND ts_end <= ?
+             UNION SELECT id FROM event WHERE ts_end > ? AND ts_start < ?
+           ) ORDER BY ts_start""", (lo, hi, lo, hi, hi, lo)).fetchall()
+    if not rows: print("(该时间窗无记录)"); return
+    mods = {}
+    for r in rows:
+        print(fmt_row(r)); mods[r["modality"]] = mods.get(r["modality"], 0) + 1
+    print(f"\n共 {len(rows)} 条 | 模态分布: {mods}")
+
+def cmd_stats(args):
+    con = connect()
+    try:
+        v = con.execute("SELECT version FROM schema_version WHERE name='lifedb'").fetchone()[0]
+        print(f"schema 版本: v{v}")
+    except sqlite3.OperationalError:
+        print("schema 版本: 未初始化 (跑 life-db init)")
+    total = con.execute("SELECT COUNT(*) FROM event").fetchone()[0]
+    print(f"总事件: {total}")
+    for r in con.execute("SELECT modality, COUNT(*) c FROM event GROUP BY modality ORDER BY c DESC"):
+        print(f"  {r['modality']}: {r['c']}")
+    span = con.execute("SELECT MIN(ts_start) a, MAX(ts_start) b FROM event").fetchone()
+    if span["a"]: print(f"时间覆盖: {span['a']} → {span['b']}")
+    for r in con.execute("SELECT source, COUNT(*) c FROM event GROUP BY source ORDER BY c DESC"):
+        print(f"  源[{r['source']}]: {r['c']}")
+
+def cmd_adapters(args):
+    """扫描 adapters/*.manifest.json — 借鉴 avsm LIFEDB_PLUGIN: 有清单才算注册的 adapter"""
+    here = os.path.dirname(os.path.abspath(__file__))
+    ad_dir = next((d for d in (os.path.join(here, "adapters"),
+                               os.path.join(os.path.dirname(here), "adapters"))
+                   if os.path.isdir(d)), os.path.join(os.path.dirname(here), "adapters"))
+    manifests = sorted(f for f in os.listdir(ad_dir) if f.endswith(".manifest.json")) if os.path.isdir(ad_dir) else []
+    if not manifests:
+        print("(无 adapter 清单)"); return
+    print(f"{'name':<12} {'modality':<10} {'mode':<9} {'dry-run':<8} {'status':<8} cmd")
+    for fn in manifests:
+        try:
+            with open(os.path.join(ad_dir, fn), encoding="utf-8") as fh:
+                m = json.load(fh)
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"  ! {fn} 清单损坏: {e}"); continue
+        print(f"{m.get('name','?'):<12} {m.get('modality','?'):<10} {m.get('mode','?'):<9} "
+              f"{'yes' if m.get('dry_run') else 'no':<8} {m.get('status','?'):<8} {m.get('cmd','')}")
+        if args.verbose and m.get("notes"):
+            print(f"{'':<12} └ {m['notes']}")
+
+def main():
+    p = argparse.ArgumentParser(prog="life-db")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("init").set_defaults(func=cmd_init)
+    pi = sub.add_parser("ingest"); pi.add_argument("file"); pi.set_defaults(func=cmd_ingest)
+    pq = sub.add_parser("query"); pq.add_argument("month"); pq.set_defaults(func=cmd_query)
+    pa = sub.add_parser("around"); pa.add_argument("ts"); pa.add_argument("--window", default="2h")
+    pa.set_defaults(func=cmd_around)
+    sub.add_parser("stats").set_defaults(func=cmd_stats)
+    pa2 = sub.add_parser("adapters"); pa2.add_argument("-v", "--verbose", action="store_true")
+    pa2.set_defaults(func=cmd_adapters)
+    args = p.parse_args()
+    args.func(args)
+
+if __name__ == "__main__":
+    main()

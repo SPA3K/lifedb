@@ -109,21 +109,25 @@
 - **Phase A · 开仓准备**（本周）
   - [x] 私有数据黑名单（.gitignore：DB/凭据/缓存/个人产出）
   - [x] LICENSE(MIT) + README(中英) 骨架 + PRODUCT.md
-  - [ ] git init + 首次提交（等用户确认公开范围）
-  - [ ] 路径去硬编码（`~/.hermes` → 平台标准目录，LIFEDB_DB 覆盖）
+  - [x] git init + 提交（mp4/gif/png 等内嵌个人轨迹的生成物永不入库；README 展示用
+        素材经 docs/assets/ 显式入库，用户已确认公开）
+  - [x] 路径去硬编码（LIFEDB_DB/LIFEDB_HOME 环境变量覆盖, 包内相对路径）
   - [ ] manifest notes 里的个人化表述清洗（如"已入库 125 训练日"）
 - **Phase B · MCP v0.1**（本周）
-  - [x] mcp_server.py 七个工具（stdio）· 契约见 §4
+  - [x] lifedb/mcp.py 七个工具（stdio）· 契约见 §4
   - [x] 本地 client 握手验证（tests/smoke_mcp.py，7 工具全绿）
   - [x] Claude Desktop / Claude Code 接入示例写进 README
+  - [x] mcp 1.x / 2.x 双版本兼容（2.x FastMCP→MCPServer 改名自动回退）
   - [ ] Windows/macOS/Linux 三平台接入实测
 - **Phase C · Demo 层**（1–2 周）
-  - [ ] `demo/movie`：人生电影 —— 一键 mp4（hero demo，非交互、README 自动播放、
+  - [x] `demo/movie`：人生电影 —— 一键 mp4（hero demo，非交互、README 自动播放、
         竖版副产物发社媒；传播优先于交互，2026-10-16 用户拍板）
-  - [ ] `demo/wrapped`：年度/周分享卡（把 `visual/` 流水线收编为 demo）
+  - [x] `demo/wrapped`：年度/周分享卡流水线收编（数据层+渲染层，out/ 不入库）
   - [ ] `demo/traincoach`：训练日视图（PRD F6）
-  - [ ] 打包：pyproject + `pipx install life-db`
+  - [x] 打包：pyproject + `pip install -e .` 验证（console scripts:
+        `life-db` / `lifedb-mcp`；PyPI 发布待 org 名确定）
   - [ ] （可选，非 hero）`demo/atlas`：交互式地图单文件 HTML（PRD F1 降级为可选项）
+  - [x] README（marketing 结构：引言→痛点→BYO Agent/BYO Data→showcase→快速开始）
 - **Phase D · 社区开放**
   - [ ] CONTRIBUTING.md + adapter 模板 + good-first-issue 清单（§3.3 即种子）
   - [ ] CI（lint + adapter 幂等性测试 + golden-file）

@@ -22,6 +22,7 @@ demo/movie/*.mp4
 demo/movie/*.gif
 demo/movie/_*.png
 demo/movie/_*.webm
+demo/wrapped/out/
 
 # --- 第三方参考仓库（本地克隆，不入库） ---
 references/

@@ -1,76 +1,166 @@
-# LifeDB
+<div align="center">
 
-> **你的人生，一个 SQLite 文件。** local-first 个人多模态时间线数据库 ——
-> 位置、照片、训练、睡眠、笔记，归一到同一时间轴。
-> 零上传、零遥测、数据不出本机。
+# LifeDB · 大记理论
 
-**English** · 中文
+**你的人生，一个 SQLite 文件 —— 并且你的 AI agent 读得懂。**
 
-*状态：early preview。API 可能变动，尚未发布 PyPI。*
+> “一切你无法喂给AI的数据，都是白做的。” —— 孙哥
 
-## 为什么
+English · [中文](README.zh-CN.md) · [产品愿景](docs/PRODUCT.md)
 
-- **Google 砍掉了 Timeline 网页版** —— 几亿人的"年度足迹地图"没了。
-  你的位置历史不该活在别人的服务器上。
-- **每个 App 只占一个切片**：照片在这、训练在那、GPS 在别处。
-  没有任何产品把它们放在**同一根时间轴**上 —— 跨模态视图是我们独占的东西。
-- **隐私即产品**：一切在本机运行，包括应用接入用的 MCP 服务。
+<img src="docs/assets/lifedb-movie.gif" width="720" alt="人生电影 — 八年 GPS 轨迹在地图上逐城点亮">
 
-## 架构
+*一条命令，从 295,135 个 GPS 点、1,668 张照片、125 次训练里生成的 32 秒人生电影。[看完整版 →](docs/assets/lifedb-movie.mp4)*
 
+</div>
+
+---
+
+## 问题
+
+你每天产生的个人数据比任何时代都多——位置、照片、训练、睡眠、心率、笔记。
+但它们全部**散落着**：锁在互不相通的 App 里，躺在别人的服务器上，
+够不着那个唯一能把它们变成意义的东西。
+
+**你的 AI agent 一个都看不见。所以它们全是白做的。**
+
+Google 刚刚对几十亿用户删掉了 Timeline 网页版。你的位置历史，
+不该活在明天就能关掉的服务器上。
+
+## 两个承诺
+
+### 🤖 Bring Your Own Agent（自带 Agent）
+
+LifeDB 不是一个 App。它是一个**本机 MCP 服务**——一个你的 AI agent 真正能用的数据库。
+
+```json
+{ "mcpServers": { "lifedb": { "command": "lifedb-mcp" } } }
 ```
-应用层   →  你的应用，通过 MCP 接入        （我们只出少量 demo）
-MCP 服务 →  mcp_server.py（仅本机）        （唯一对外契约）
-内核     →  SQLite + 统一导入层 + CLI
-```
 
-应用只通过 **MCP 工具面**访问数据 —— Claude Desktop / Claude Code / 任意
-MCP 客户端皆可接入，应用层用什么语言都行。
+接入就是这一行。Claude（或任何支持 MCP 的 agent）立刻获得七个读你人生的工具：
+*那天发生了什么、那周我在哪、给我生成 2024 的地图、我通勤有多远。*
+七个走索引的查询——不暴露任意 SQL，不做全表扫描。
 
-## 快速开始（preview）
+下面的 demo 不是产品路线图，是**示例**——证明 agent 能在这个契约上盖出什么。
+应用层是你的：接上 MCP，写你的应用，结束。
+
+### 🔒 Bring Your Own Data（自带数据）
+
+- **数据不出本机。** 无云端、无账号、无遥测、零上传。
+  一个你完全拥有的 SQLite 文件——可备份、可删除、可带走。
+- **导入 adapter 是插件**——一个 manifest + 一个脚本。内核只定义契约，
+  连接器由社区共建。（想让你的数据源被支持？看下面的招募清单，欢迎 PR。）
+- **开放格式。** 它就是 SQLite。今天用 `sqlite3` 查它，十年后还是。
+  从设计上就没有锁定。
+
+## 大家用它造什么
+
+<table>
+<tr>
+<td width="50%">
+<b>🎬 人生电影</b><br>
+一条命令 → 一部电影级的多年回顾。<br>
+轨迹逐城点亮，照片弹入，统计收尾。
+<a href="docs/assets/lifedb-movie.mp4">观看 →</a>
+</td>
+<td width="50%">
+<b>📊 年度 Wrapped</b><br>
+Spotify 年度总结式的分享卡，9:16 竖版，完全自托管。<br>
+GPS 见证的夜晚、举起的公斤、拍过的城市。
+</td>
+</tr>
+<tr>
+<td>
+<img src="docs/assets/wrapped-2026.jpg" alt="2026 年度 Wrapped — 五张分享卡">
+</td>
+<td>
+<img src="docs/assets/weekly-review.jpg" alt="本周回顾 — 通勤、节奏、训练、身体">
+</td>
+</tr>
+<tr>
+<td colspan="2">
+<b>🗓️ 本周回顾</b>——每周一早，一张卡落进你的聊天窗口：通勤用时、步数节奏、
+训练容量、静息心率趋势。由 cron 定时任务生成，走的是外部 agent 一模一样的 MCP 工具。
+</td>
+</tr>
+</table>
+
+以上全部是 **demo**，不是围栏花园。所有数据都流经下面这七个 MCP 工具。
+
+## 快速开始
 
 ```bash
-git clone <this-repo> && cd life-db
-life-db init                       # 建库
-life-db ingest events.jsonl        # 统一 JSONL 契约，幂等可重放
-life-db query 2026-10              # 某月全模态时间线
+pip install lifedb            # 或: pipx install lifedb
+
+life-db init                            # 建库 timeline.db
+life-db ingest events.jsonl             # 统一 JSONL 契约，幂等可重放
+life-db query 2026-10                   # 某月全模态时间线
 life-db around 2026-10-13T09:00 --window 2h   # 那一刻前后发生了什么
-life-db stats                      # 覆盖度与计数
+life-db stats                           # 覆盖度与计数
 ```
 
-### MCP 接入（Claude Desktop / Claude Code）
+接入你的 agent（Claude Desktop / Claude Code / 任意 MCP 客户端）：
 
 ```json
 {
   "mcpServers": {
     "lifedb": {
-      "command": "python",
-      "args": ["mcp_server.py"],
+      "command": "lifedb-mcp",
       "env": { "LIFEDB_DB": "/path/to/timeline.db" }
     }
   }
 }
 ```
 
-工具：`lifedb_stats` · `lifedb_query_month` · `lifedb_around` ·
-`lifedb_geo_track` · `lifedb_export_atlas` · `lifedb_ingest_jsonl` ·
-`lifedb_adapters`
+### MCP 工具面（v0.1）
+
+| 工具 | 给 agent 的能力 |
+|---|---|
+| `lifedb_stats` | schema 版本、各模态计数、时间覆盖 |
+| `lifedb_query_month` | 整月时间线 |
+| `lifedb_around` | 任意时刻前后的跨模态事件 |
+| `lifedb_geo_track` | 任意时间窗的原始 GPS 轨迹（地图渲染用）|
+| `lifedb_export_atlas` | 一站式打包：轨迹 + 事件 + 照片 |
+| `lifedb_ingest_jsonl` | 唯一写入口——幂等，默认 dry-run |
+| `lifedb_adapters` | 发现已安装的数据源插件 |
+
+工具只增不改不删——这是契约。
 
 ## 数据源
 
-导入 adapter 是**插件**——一个 manifest + 一个脚本。现已支持：手机 GPS 轨迹、
-训记训练、Apple 健康导出、Google Timeline、照片 EXIF、iCloud 同步。
+adapter 是**插件**：一个 JSON manifest + 一个脚本，自动发现。现已支持：
 
-想接你的数据源？见 [docs/PRODUCT.md](docs/PRODUCT.md) §3.3 的路线图
-（GPX/FIT、Hevy、Strava、Takeout、Obsidian……）—— 欢迎 PR。
+| 数据源 | 数据 | 模式 |
+|---|---|---|
+| 手机 GPS 轨迹 | 11 年秒级定位点 | periodic |
+| 训记 (xunji) | 力量训练：组数、容量、动作 | periodic |
+| Apple 健康导出 | 睡眠、锻炼轨迹、心电、健康指标 | manual |
+| Google Timeline | 停留段与位移段 | manual |
+| 照片库 | EXIF GPS → 照片层 | manual |
+| iCloud 同步 | 自动下载流水线 | periodic |
 
-## 隐私
+**招募中——欢迎 PR：** Hevy / Strong / Strava CSV · GPX / FIT ·
+Google Takeout（新版 Records.json）· Obsidian 库 · Keep / 小米运动 /
+华为运动健康 · Garmin 导出。接口契约见 [docs/PRODUCT.md](docs/PRODUCT.md) §3.3——
+一个 manifest 和一个脚本就够了。
 
-- 无账号、无云端、无遥测。
-- MCP 服务只走 stdio / 本机回环。
-- 不暴露任意 SQL——读工具全部走索引查询，唯一写入口是幂等 JSONL 导入
-  （默认 dry-run）。
-- 导出的分享卡 / 单文件 HTML 可能包含你的真实位置，分享前请自查。
+## 架构
+
+```
+你的 agent      Claude / Cursor / 任何说 MCP 的东西
+    ⬇  stdio（仅本机）
+MCP 服务        lifedb-mcp —— 契约层（7 个工具，无任意 SQL）
+    ⬇
+内核            SQLite timeline.db + 统一 JSONL 导入层 + CLI
+    ⬇
+你的数据        手机 GPS · 训练 · 健康 · 照片 · 时间线
+```
+
+## 文档
+
+- [产品愿景与路线图](docs/PRODUCT.md) —— 架构、招募中的 adapter、阶段计划
+- [内核设计](docs/DESIGN.md) · [导入手册](docs/INGESTION.md)
+- [PRD（功能规格）](docs/PRD-lifedb-visual-app.md)
 
 ## 许可
 

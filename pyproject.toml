@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lifedb"
+version = "0.1.0"
+description = "Local-first personal timeline DB — locations, photos, workouts, sleep on one time axis. Your data never leaves your machine."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+keywords = ["lifelog", "timeline", "quantified-self", "mcp", "local-first", "sqlite"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Database",
+]
+dependencies = ["mcp>=1.0"]
+
+[project.scripts]
+life-db = "lifedb.cli:main"
+lifedb-mcp = "lifedb.mcp:main"
+
+[project.urls]
+Homepage = "https://github.com/lifedb/lifedb"
+
+[tool.setuptools]
+packages = ["lifedb"]
+
+[tool.setuptools.package-data]
+lifedb = ["schema.sql"]
