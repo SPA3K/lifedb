@@ -58,29 +58,32 @@ LifeDB 不是一个 App。它是一个**本机 MCP 服务**——一个你的 AI
 <table>
 <tr>
 <td width="50%">
-<b>🎬 人生电影</b><br>
-一条命令 → 一部电影级的多年回顾。<br>
-轨迹逐城点亮，照片弹入，统计收尾。
-<a href="docs/assets/lifedb-movie.mp4">观看 →</a>
+<b>📍 单日回放</b><br>
+一天实时回放：相机跟随 GPS 穿城移动，照片在拍摄地弹出。配套跨模态
+<a href="docs/assets/day-card.jpg">英雄日卡 →</a>，照片按 EXIF 时刻钉回轨迹。
+<img src="docs/assets/day-replay.gif" alt="单日回放 — 相机跟随 GPS 穿城"><br>
+<a href="docs/assets/day-replay.mp4">看完整版 →</a>
 </td>
 <td width="50%">
-<b>📊 年度 Wrapped</b><br>
-Spotify 年度总结式的分享卡，9:16 竖版，完全自托管。<br>
-GPS 见证的夜晚、举起的公斤、拍过的城市。
+<b>🧭 多日行程回放</b><br>
+多天行程拼成一条连续旅程：传入第二个日期，轨迹自动拼接——跨城停留、
+照片气泡、一条时间轴。
+<img src="docs/assets/trip-replay.gif" alt="多日行程回放 — 一条连续旅程"><br>
+<a href="docs/assets/trip-replay.mp4">看完整版 →</a>
 </td>
 </tr>
 <tr>
-<td>
+<td width="50%">
+<b>📊 年度 Wrapped</b><br>
+Spotify 年度总结式的分享卡，9:16 竖版，完全自托管。GPS 见证的夜晚、
+举起的公斤、拍过的城市。
 <img src="docs/assets/wrapped-2026.jpg" alt="2026 年度 Wrapped — 五张分享卡">
 </td>
-<td>
+<td width="50%">
+<b>🗓️ 本周回顾</b><br>
+每周一早，一张卡落进你的聊天窗口：通勤用时、步数节奏、训练容量、
+静息心率趋势。由 cron 定时任务生成，走的是外部 agent 一模一样的 MCP 工具。
 <img src="docs/assets/weekly-review.jpg" alt="本周回顾 — 通勤、节奏、训练、身体">
-</td>
-</tr>
-<tr>
-<td colspan="2">
-<b>🗓️ 本周回顾</b>——每周一早，一张卡落进你的聊天窗口：通勤用时、步数节奏、
-训练容量、静息心率趋势。由 cron 定时任务生成，走的是外部 agent 一模一样的 MCP 工具。
 </td>
 </tr>
 </table>
