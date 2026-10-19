@@ -93,8 +93,7 @@ Spotify 年度总结式的分享卡，9:16 竖版，完全自托管。GPS 见证
 ## 快速开始
 
 ```bash
-pip install git+https://github.com/SPA3K/lifedb.git   # PyPI 包即将发布
-# 或: pipx install git+https://github.com/SPA3K/lifedb.git
+pip install lifedb            # 或: pipx install lifedb
 ```
 
 ```bash

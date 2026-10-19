@@ -106,8 +106,7 @@ the same seven MCP tools listed below.
 ## Quick start
 
 ```bash
-pip install git+https://github.com/SPA3K/lifedb.git   # PyPI package coming soon
-# or: pipx install git+https://github.com/SPA3K/lifedb.git
+pip install lifedb            # or: pipx install lifedb
 ```
 
 ```bash
