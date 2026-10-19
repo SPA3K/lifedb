@@ -4,6 +4,11 @@
 
 **Your life, one SQLite file — and any AI agent can read it.**
 
+[![GitHub stars](https://img.shields.io/github/stars/SPA3K/lifedb?style=flat&logo=github&label=stars)](https://github.com/SPA3K/lifedb/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/SPA3K/lifedb?style=flat&logo=github&label=forks)](https://github.com/SPA3K/lifedb/network/members)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+
 > “一切你无法喂给AI的数据，都是白做的。” —— 孙哥
 
 [中文](README.zh-CN.md) · English · [Product Vision](docs/PRODUCT.md)
@@ -101,8 +106,11 @@ the same seven MCP tools listed below.
 ## Quick start
 
 ```bash
-pip install lifedb            # or: pipx install lifedb
+pip install git+https://github.com/SPA3K/lifedb.git   # PyPI package coming soon
+# or: pipx install git+https://github.com/SPA3K/lifedb.git
+```
 
+```bash
 life-db init                            # create your timeline.db
 life-db ingest events.jsonl             # unified JSONL contract, idempotent
 life-db query 2026-10                   # one month, every modality
@@ -173,6 +181,14 @@ Your data         phone GPS · workouts · health · photos · timeline
 - [Product vision & roadmap](docs/PRODUCT.md) — architecture, wanted adapters, phases
 - [Kernel design](docs/DESIGN.md) · [Ingestion guide](docs/INGESTION.md)
 - [PRD (feature specs)](docs/PRD-lifedb-visual-app.md)
+
+## ⭐ Star it
+
+If your AI agent can finally see your life — star the repo. It's the only
+distribution a local-first, zero-marketing project gets.
+
+**Want an adapter that's missing?** Open an issue or grab one from the
+wanted list above — a manifest and a script is all it takes.
 
 ## License
 

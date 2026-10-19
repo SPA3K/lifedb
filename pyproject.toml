@@ -25,7 +25,9 @@ life-db = "lifedb.cli:main"
 lifedb-mcp = "lifedb.mcp:main"
 
 [project.urls]
-Homepage = "https://github.com/lifedb/lifedb"
+Homepage = "https://github.com/SPA3K/lifedb"
+Repository = "https://github.com/SPA3K/lifedb"
+Issues = "https://github.com/SPA3K/lifedb/issues"
 
 [tool.setuptools]
 packages = ["lifedb"]
